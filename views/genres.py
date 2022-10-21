@@ -1,3 +1,4 @@
+from flask import request
 from flask_restx import Resource, Namespace
 
 from dao.model.genre import GenreSchema
@@ -13,6 +14,11 @@ class GenresView(Resource):
         res = GenreSchema(many=True).dump(rs)
         return res, 200
 
+    def post(self):
+        req_json = request.json
+        user = genre_service.create(req_json)
+        return "", 201, {"location": f"/users/{user.id}"}
+
 
 @genre_ns.route('/<int:rid>')
 class GenreView(Resource):
@@ -20,3 +26,14 @@ class GenreView(Resource):
         r = genre_service.get_one(rid)
         sm_d = GenreSchema().dump(r)
         return sm_d, 200
+
+    def put(self, rid):
+        req_json = request.json
+        if "id" not in req_json:
+            req_json["id"] = rid
+        genre_service.update(req_json)
+        return "", 204
+
+    def delete(self, rid):
+        genre_service.delete(rid)
+        return "", 204
