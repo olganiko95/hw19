@@ -5,20 +5,20 @@ from implemented import user_service
 
 def auth_required(func):
     def wrapper(*args, **kwargs):
-        token = request.headers.environ.get('HTTP_AUTHORIZATION').replace('Bearer ', '')
+        token = request.headers.environ.get('HTTP_AUTHORIZATION', '').replace('Bearer ', '')
 
         if not token:
             return 'Вы не передали токен в заголовке'
         try:
             jwt.decode(token, key=current_app.config['SECRET_KEY'],
-                              algorithm=current_app.config['TOKEN_EXPIRE_MINUTES'])
+                              algorithms=current_app.config['ALGORITHM'])
 
             return func(*args, **kwargs)
         except Exception as e:
             print(e)
             return e
 
-        return wrapper
+    return wrapper
 
 def admin_required(func):
     def wrapper(*args, **kwargs):
@@ -28,7 +28,7 @@ def admin_required(func):
             return 'Вы не передали токен в заголовке'
         try:
             data = jwt.decode(token, key=current_app.config['SECRET_KEY'],
-                              algorithm=current_app.config['TOKEN_EXPIRE_MINUTES'])
+                              algorithms=current_app.config['ALGORITHM'])
 
             user = user_service.get_by_username(data.get('username'))
             if user:
@@ -40,4 +40,4 @@ def admin_required(func):
             print(e)
             return e
 
-        return wrapper
+    return wrapper

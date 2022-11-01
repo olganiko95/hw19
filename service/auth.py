@@ -14,8 +14,13 @@ def __generate_password_digest(password):
             iterations=current_app.config['PWD_HASH_ITERATIONS']
         )
 
-def generate_password_hash(password: str) -> str:
-    return base64.encode(__generate_password_digest(password)).decode('utf-8')
+def generate_password_hash(password):
+    return base64.b64encode(hashlib.pbkdf2_hmac(
+            'sha256',
+            password.encode('utf-8'),  # Convert the password to bytes
+            salt=current_app.config['PWD_HASH_SALT'],
+            iterations=current_app.config['PWD_HASH_ITERATIONS']
+        ))
 
 def compare_password(password_user, password_hash):
     return generate_password_hash(password_user) == password_hash
@@ -42,7 +47,7 @@ def generate_token(username, password_hash, password, is_refresh=True):
     return {"access_token": access_token, "refresh_token": refresh_token}
 
 def approve(token):
-    data = jwt.decode(token, key=current_app.config['SECRET_KEY'], algorithm=current_app.config['TOKEN_EXPIRE_MINUTES'])
+    data = jwt.decode(token, key=current_app.config['SECRET_KEY'], algorithms=current_app.config['ALGORITHM'])
     username = data.get('username')
     password = data.get('password')
     return generate_token(username=username, password=password, password_hash=None, is_refresh=True)
